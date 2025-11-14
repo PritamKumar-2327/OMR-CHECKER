@@ -210,28 +210,65 @@ const StudentDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-primary hover:bg-primary/5 transition-all duration-300 cursor-pointer group"
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <div className="flex flex-col items-center">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Upload className="h-10 w-10 text-primary" />
+            {!selectedFile ? (
+              <div 
+                className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-primary hover:bg-primary/5 transition-all duration-300 cursor-pointer group"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <Upload className="h-10 w-10 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-3">
+                    Drop your OMR sheet here
+                  </h3>
+                  <p className="text-gray-500 mb-6 max-w-md">
+                    or click to browse from your computer
+                  </p>
+                  <Button size="lg" variant="outline" className="mb-6">
+                    <Camera className="mr-2 h-5 w-5" />
+                    Choose File
+                  </Button>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-3">
-                  Drop your OMR sheet here
-                </h3>
-                <p className="text-gray-500 mb-6 max-w-md">
-                  or click to browse from your computer
-                </p>
-                <Button size="lg" variant="outline" className="mb-6">
-                  <Camera className="mr-2 h-5 w-5" />
-                  Choose File
-                </Button>
               </div>
-            </div>
+            ) : (
+              <div className="border-2 border-solid border-primary rounded-xl p-6 bg-primary/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{selectedFile.name}</h4>
+                      <p className="text-sm text-gray-600">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedFile(null)}
+                  >
+                    <XCircle className="h-5 w-5 text-gray-500" />
+                  </Button>
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={handleSubmit} className="flex-1" size="lg">
+                    <Upload className="mr-2 h-5 w-5" />
+                    Submit for Processing
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Change File
+                  </Button>
+                </div>
+              </div>
+            )}
             
             {/* Quality Guidelines */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
