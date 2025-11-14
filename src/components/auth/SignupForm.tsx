@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link, useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { FileText, Users, UserPlus } from "lucide-react";
 
 const SignupForm = () => {
@@ -18,46 +18,25 @@ const SignupForm = () => {
     confirmPassword: "",
     acceptTerms: false
   });
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signup } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent, userType: 'admin' | 'student') => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     // Basic validation
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Please ensure both password fields match.",
-        variant: "destructive",
-      });
       setIsLoading(false);
       return;
     }
 
     if (!formData.acceptTerms) {
-      toast({
-        title: "Terms Required",
-        description: "Please accept the terms and conditions to continue.",
-        variant: "destructive",
-      });
       setIsLoading(false);
       return;
     }
 
-    // Simulate signup process
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Account Created Successfully!",
-        description: `Welcome to OMR Checker! Redirecting to ${userType} dashboard...`,
-        variant: "default",
-      });
-      
-      // Redirect based on user type
-      navigate(userType === 'admin' ? '/admin' : '/student');
-    }, 2000);
+    await signup(formData.email, formData.password, formData.name);
+    setIsLoading(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,7 +78,7 @@ const SignupForm = () => {
               </TabsList>
 
               <TabsContent value="student">
-                <form onSubmit={(e) => handleSubmit(e, 'student')} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="student-name">Full Name</Label>
                     <Input
@@ -174,7 +153,7 @@ const SignupForm = () => {
               </TabsContent>
 
               <TabsContent value="admin">
-                <form onSubmit={(e) => handleSubmit(e, 'admin')} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="admin-name">Full Name</Label>
                     <Input

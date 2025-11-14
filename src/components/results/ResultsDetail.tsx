@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { useParams, Link } from "react-router-dom";
+import { useSubmissionDetail } from "@/hooks/useSubmissionDetail";
+import { PerformanceChart, QuestionAnalysisChart } from "./PerformanceChart";
+import { format } from "date-fns";
 import { 
   CheckCircle, 
   XCircle, 
@@ -11,44 +13,36 @@ import {
   ArrowLeft,
   BarChart3,
   FileText,
-  Calendar
+  Calendar,
+  Loader2
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const ResultsDetail = () => {
-  // Mock exam result data
-  const examResult = {
-    id: 1,
-    examTitle: "Mathematics Final Exam",
-    studentName: "John Doe",
-    studentId: "STU2024001",
-    date: "2024-01-15",
-    totalQuestions: 40,
-    correctAnswers: 34,
-    wrongAnswers: 6,
-    unansweredQuestions: 0,
-    score: 85,
-    percentage: 85,
-    timeProcessed: "2024-01-15 14:30:25",
-    answerKey: "ABCDABCDABCDABCDABCDABCDABCDABCDABCDABCD",
-    studentAnswers: "ABCDABCDABCDABCDABCDABXDABCDABCDABCDABCD" // X represents wrong answer
-  };
+  const { id } = useParams<{ id: string }>();
+  const { submission, questionResults, previousSubmissions, isLoading } = useSubmissionDetail(id || '');
 
-  // Generate detailed question analysis
-  const questionAnalysis = Array.from({ length: examResult.totalQuestions }, (_, index) => {
-    const questionNum = index + 1;
-    const correctAnswer = examResult.answerKey[index];
-    const studentAnswer = examResult.studentAnswers[index];
-    const isCorrect = correctAnswer === studentAnswer;
-    const isUnanswered = studentAnswer === '-';
-    
-    return {
-      questionNumber: questionNum,
-      correctAnswer,
-      studentAnswer: isUnanswered ? 'Not Answered' : studentAnswer,
-      status: isUnanswered ? 'unanswered' : (isCorrect ? 'correct' : 'wrong')
-    };
-  });
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!submission || !questionResults) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-2xl font-bold mb-2">Results Not Found</h2>
+          <p className="text-muted-foreground mb-4">The requested results could not be found.</p>
+          <Button asChild>
+            <Link to="/student">Back to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -77,9 +71,13 @@ const ResultsDetail = () => {
   };
 
   const downloadResults = (format: 'pdf' | 'excel') => {
-    // Mock download functionality
-    const filename = `${examResult.examTitle.replace(/\s+/g, '_')}_${examResult.studentId}_results.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+    const filename = `${submission.exam_name.replace(/\s+/g, '_')}_results.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
     alert(`Downloading ${filename}...`);
+  };
+
+  const getQuestionStatus = (result: typeof questionResults[0]) => {
+    if (result.is_correct === null) return 'unanswered';
+    return result.is_correct ? 'correct' : 'wrong';
   };
 
   return (
@@ -94,7 +92,7 @@ const ResultsDetail = () => {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{examResult.examTitle}</h1>
+            <h1 className="text-3xl font-bold">{submission.exam_name}</h1>
             <p className="text-muted-foreground">Detailed Results Analysis</p>
           </div>
         </div>
@@ -104,145 +102,171 @@ const ResultsDetail = () => {
           <Card className="shadow-card border-0 gradient-card">
             <CardContent className="p-6 text-center">
               <div className="text-3xl font-bold text-primary mb-2">
-                {examResult.percentage}%
+                {submission.score}%
               </div>
               <p className="text-sm text-muted-foreground">Overall Score</p>
               <p className="text-lg font-medium mt-1">
-                {examResult.score}/{examResult.totalQuestions}
+                {submission.correct_answers}/{submission.total_questions}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 gradient-card">
+          <Card className="shadow-card border-0">
             <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <CheckCircle className="w-8 h-8 text-success" />
-              </div>
-              <div className="text-2xl font-bold text-success mb-1">
-                {examResult.correctAnswers}
+              <div className="text-3xl font-bold text-success mb-2">
+                {submission.correct_answers}
               </div>
               <p className="text-sm text-muted-foreground">Correct Answers</p>
+              <div className="flex items-center justify-center mt-2">
+                <CheckCircle className="w-4 h-4 text-success mr-1" />
+                <span className="text-sm">
+                  {Math.round((submission.correct_answers! / submission.total_questions!) * 100)}%
+                </span>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 gradient-card">
+          <Card className="shadow-card border-0">
             <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <XCircle className="w-8 h-8 text-destructive" />
-              </div>
-              <div className="text-2xl font-bold text-destructive mb-1">
-                {examResult.wrongAnswers}
+              <div className="text-3xl font-bold text-destructive mb-2">
+                {submission.incorrect_answers}
               </div>
               <p className="text-sm text-muted-foreground">Wrong Answers</p>
+              <div className="flex items-center justify-center mt-2">
+                <XCircle className="w-4 h-4 text-destructive mr-1" />
+                <span className="text-sm">
+                  {Math.round((submission.incorrect_answers! / submission.total_questions!) * 100)}%
+                </span>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 gradient-card">
+          <Card className="shadow-card border-0">
             <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <MinusCircle className="w-8 h-8 text-warning" />
-              </div>
-              <div className="text-2xl font-bold text-warning mb-1">
-                {examResult.unansweredQuestions}
+              <div className="text-3xl font-bold text-warning mb-2">
+                {submission.unanswered}
               </div>
               <p className="text-sm text-muted-foreground">Unanswered</p>
+              <div className="flex items-center justify-center mt-2">
+                <MinusCircle className="w-4 h-4 text-warning mr-1" />
+                <span className="text-sm">
+                  {Math.round((submission.unanswered! / submission.total_questions!) * 100)}%
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Exam Information */}
-          <Card className="shadow-card border-0 gradient-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Exam Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
+        {/* Performance Charts */}
+        {previousSubmissions && previousSubmissions.length > 0 && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <PerformanceChart 
+              currentScore={submission.score!}
+              previousScores={previousSubmissions}
+            />
+            <QuestionAnalysisChart questionResults={questionResults} />
+          </div>
+        )}
+
+        {/* Exam Information */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Exam Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="flex items-start gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground mt-1" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Student Name</p>
-                  <p className="font-medium">{examResult.studentName}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Student ID</p>
-                  <p className="font-medium">{examResult.studentId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Exam Date</p>
-                  <p className="font-medium flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {examResult.date}
+                  <p className="font-semibold">Submission Date</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(submission.created_at), 'MMMM dd, yyyy - hh:mm a')}
                   </p>
                 </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <BarChart3 className="h-5 w-5 text-muted-foreground mt-1" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Processed At</p>
-                  <p className="font-medium">{examResult.timeProcessed}</p>
+                  <p className="font-semibold">Total Questions</p>
+                  <p className="text-sm text-muted-foreground">{submission.total_questions} questions</p>
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              <Separator />
+        {/* Download Options */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Download Results</CardTitle>
+            <CardDescription>Export your results in different formats</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Button onClick={() => downloadResults('pdf')} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </Button>
+              <Button onClick={() => downloadResults('excel')} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Download Excel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Performance</p>
-                <Progress value={examResult.percentage} className="h-3 mb-2" />
-                <div className="flex justify-between text-sm">
-                  <span>Score: {examResult.score}/{examResult.totalQuestions}</span>
-                  <span>{examResult.percentage}%</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Button onClick={() => downloadResults('pdf')} className="w-full">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF Report
-                </Button>
-                <Button variant="outline" onClick={() => downloadResults('excel')} className="w-full">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Excel Report
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Question-by-Question Analysis */}
-          <Card className="lg:col-span-2 shadow-card border-0 gradient-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                Question-by-Question Analysis
-              </CardTitle>
-              <CardDescription>
-                Detailed breakdown of each question and answer
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 max-h-96 overflow-y-auto">
-                {questionAnalysis.map((question) => (
+        {/* Question-by-Question Analysis */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Question-by-Question Analysis</CardTitle>
+            <CardDescription>
+              Detailed breakdown of each question's result
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3">
+              {questionResults.map((result) => {
+                const status = getQuestionStatus(result);
+                return (
                   <div
-                    key={question.questionNumber}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${getStatusColor(question.status)}`}
+                    key={result.question_number}
+                    className={`relative p-3 rounded-lg border-2 ${getStatusColor(status)} hover:shadow-lg transition-shadow`}
                   >
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(question.status)}
-                      <div>
-                        <p className="font-medium">Question {question.questionNumber}</p>
-                        <p className="text-sm opacity-80">
-                          Your answer: {question.studentAnswer}
-                        </p>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="text-sm font-bold">Q{result.question_number}</div>
+                      {getStatusIcon(status)}
+                      <div className="text-xs text-center">
+                        <div>Your: {result.marked_answer || 'N/A'}</div>
+                        <div>Ans: {result.correct_answer}</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm opacity-80">Correct answer</p>
-                      <p className="font-bold">{question.correctAnswer}</p>
-                    </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+            
+            <Separator className="my-6" />
+            
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 justify-center">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-success" />
+                <span className="text-sm">Correct</span>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-destructive" />
+                <span className="text-sm">Wrong</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MinusCircle className="h-4 w-4 text-warning" />
+                <span className="text-sm">Unanswered</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
