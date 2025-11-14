@@ -14,7 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      question_results: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          marked_answer: string | null
+          question_number: number
+          submission_id: string
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          marked_answer?: string | null
+          question_number: number
+          submission_id: string
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          marked_answer?: string | null
+          question_number?: number
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_results_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submissions: {
+        Row: {
+          correct_answers: number | null
+          created_at: string
+          exam_name: string
+          file_url: string
+          id: string
+          incorrect_answers: number | null
+          score: number | null
+          status: Database["public"]["Enums"]["submission_status"]
+          time_taken: number | null
+          total_questions: number | null
+          unanswered: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          correct_answers?: number | null
+          created_at?: string
+          exam_name: string
+          file_url: string
+          id?: string
+          incorrect_answers?: number | null
+          score?: number | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          time_taken?: number | null
+          total_questions?: number | null
+          unanswered?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          correct_answers?: number | null
+          created_at?: string
+          exam_name?: string
+          file_url?: string
+          id?: string
+          incorrect_answers?: number | null
+          score?: number | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          time_taken?: number | null
+          total_questions?: number | null
+          unanswered?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +108,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      submission_status: "processing" | "completed" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +235,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      submission_status: ["processing", "completed", "failed"],
+    },
   },
 } as const
