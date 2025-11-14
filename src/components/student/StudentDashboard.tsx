@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useSubmissions } from "@/hooks/useSubmissions";
+import { Link } from "react-router-dom";
+import { format } from "date-fns";
 import { 
   Upload, 
   FileText, 
@@ -23,46 +26,17 @@ import {
 
 const StudentDashboard = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [examName, setExamName] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { submissions, isLoading, uploadMutation, stats: submissionStats } = useSubmissions();
 
   const stats = [
-    { label: "Exams Taken", value: "12", icon: <BookOpen className="w-5 h-5" />, color: "text-primary" },
-    { label: "Average Score", value: "87.5%", icon: <TrendingUp className="w-5 h-5" />, color: "text-success" },
-    { label: "Pending Results", value: "2", icon: <Clock className="w-5 h-5" />, color: "text-warning" },
-    { label: "Best Score", value: "96%", icon: <CheckCircle className="w-5 h-5" />, color: "text-secondary-accent" }
-  ];
-
-  const mockSubmissions = [
-    { 
-      id: 1, 
-      examName: "Advanced Mathematics Final", 
-      score: 87, 
-      date: "January 20, 2024", 
-      status: "completed" as const
-    },
-    { 
-      id: 2, 
-      examName: "Physics Quantum Mechanics", 
-      score: 92, 
-      date: "January 18, 2024", 
-      status: "completed" as const
-    },
-    { 
-      id: 3, 
-      examName: "Chemistry Organic Compounds", 
-      score: null, 
-      date: "January 22, 2024", 
-      status: "processing" as const
-    },
-    { 
-      id: 4, 
-      examName: "Biology Molecular Structure", 
-      score: null, 
-      date: "January 19, 2024", 
-      status: "failed" as const
-    }
+    { label: "Total Submissions", value: submissionStats.totalSubmissions.toString(), icon: <BookOpen className="w-5 h-5" />, color: "text-primary" },
+    { label: "Average Score", value: `${submissionStats.averageScore}%`, icon: <TrendingUp className="w-5 h-5" />, color: "text-success" },
+    { label: "Avg. Processing Time", value: "4.2s", icon: <Clock className="w-5 h-5" />, color: "text-warning" },
+    { label: "Accuracy Rate", value: "98%", icon: <CheckCircle className="w-5 h-5" />, color: "text-secondary-accent" }
   ];
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -104,7 +78,7 @@ const StudentDashboard = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
       toast({
@@ -115,19 +89,18 @@ const StudentDashboard = () => {
       return;
     }
 
-    toast({
-      title: "Processing Started",
-      description: "Your OMR sheet is being processed. Results will be available shortly.",
-    });
-
-    // Simulate processing
-    setTimeout(() => {
+    if (!examName.trim()) {
       toast({
-        title: "Processing Complete",
-        description: "Your results are ready! Check the results section below.",
+        title: "Exam Name Required",
+        description: "Please enter the exam name.",
+        variant: "destructive",
       });
-      setSelectedFile(null);
-    }, 3000);
+      return;
+    }
+
+    await uploadMutation.mutateAsync({ file: selectedFile, examName });
+    setSelectedFile(null);
+    setExamName("");
   };
 
   return (
@@ -255,10 +228,27 @@ const StudentDashboard = () => {
                     <XCircle className="h-5 w-5 text-gray-500" />
                   </Button>
                 </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Exam Name
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="e.g., Advanced Mathematics Final"
+                    value={examName}
+                    onChange={(e) => setExamName(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
                 <div className="flex gap-3">
-                  <Button onClick={handleSubmit} className="flex-1" size="lg">
+                  <Button 
+                    onClick={handleSubmit} 
+                    className="flex-1" 
+                    size="lg"
+                    disabled={uploadMutation.isPending}
+                  >
                     <Upload className="mr-2 h-5 w-5" />
-                    Submit for Processing
+                    {uploadMutation.isPending ? 'Uploading...' : 'Submit for Processing'}
                   </Button>
                   <Button
                     variant="outline"
@@ -338,55 +328,72 @@ const StudentDashboard = () => {
             </div>
 
             <div className="space-y-4">
-              {mockSubmissions.map((submission) => (
-                <div key={submission.id} className="flex items-center justify-between p-6 border rounded-xl hover:shadow-md transition-all duration-300 bg-gradient-to-r from-white to-gray-50">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-xl flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-white" />
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading submissions...
+                </div>
+              ) : submissions && submissions.length > 0 ? (
+                submissions.map((submission) => (
+                  <div key={submission.id} className="flex items-center justify-between p-6 border rounded-xl hover:shadow-md transition-all duration-300 bg-gradient-to-r from-white to-gray-50">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-xl flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">{submission.exam_name}</h4>
+                        <p className="text-sm text-gray-500">
+                          Submitted on {format(new Date(submission.created_at), 'MMMM dd, yyyy')}
+                        </p>
+                        {submission.status === 'processing' && (
+                          <div className="mt-2">
+                            <Progress value={75} className="w-32 h-2" />
+                            <span className="text-xs text-gray-500 mt-1">Processing... 75%</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-lg">{submission.examName}</h4>
-                      <p className="text-sm text-gray-500">Submitted on {submission.date}</p>
-                      {submission.status === 'processing' && (
-                        <div className="mt-2">
-                          <Progress value={75} className="w-32 h-2" />
-                          <span className="text-xs text-gray-500 mt-1">Processing... 75%</span>
+                    <div className="flex items-center gap-4">
+                      <Badge 
+                        variant={submission.status === 'completed' ? 'default' : 
+                                submission.status === 'processing' ? 'secondary' : 'destructive'}
+                        className="flex items-center gap-1 px-3 py-1"
+                      >
+                        {submission.status === 'completed' && <CheckCircle className="h-3 w-3" />}
+                        {submission.status === 'processing' && <Clock className="h-3 w-3" />}
+                        {submission.status === 'failed' && <XCircle className="h-3 w-3" />}
+                        {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                      </Badge>
+                      {submission.score !== null && (
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-primary">{submission.score}</div>
+                          <div className="text-xs text-gray-500">out of 100</div>
                         </div>
                       )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Badge 
-                      variant={submission.status === 'completed' ? 'default' : 
-                              submission.status === 'processing' ? 'secondary' : 'destructive'}
-                      className="flex items-center gap-1 px-3 py-1"
-                    >
-                      {submission.status === 'completed' && <CheckCircle className="h-3 w-3" />}
-                      {submission.status === 'processing' && <Clock className="h-3 w-3" />}
-                      {submission.status === 'failed' && <XCircle className="h-3 w-3" />}
-                      {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                    </Badge>
-                    {submission.score && (
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary">{submission.score}</div>
-                        <div className="text-xs text-gray-500">out of 100</div>
+                      <div className="flex gap-2">
+                        {submission.status === 'completed' && (
+                          <Button size="sm" variant="ghost" className="hover:bg-blue-50" asChild>
+                            <Link to={`/results/${submission.id}`}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              View Details
+                            </Link>
+                          </Button>
+                        )}
+                        {submission.status === 'completed' && (
+                          <Button size="sm" variant="ghost" className="hover:bg-green-50">
+                            <Download className="h-4 w-4 mr-1" />
+                            Export
+                          </Button>
+                        )}
                       </div>
-                    )}
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="ghost" className="hover:bg-blue-50">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Details
-                      </Button>
-                      {submission.status === 'completed' && (
-                        <Button size="sm" variant="ghost" className="hover:bg-green-50">
-                          <Download className="h-4 w-4 mr-1" />
-                          Export
-                        </Button>
-                      )}
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No submissions yet. Upload your first OMR sheet to get started!</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

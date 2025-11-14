@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { FileText, Users, LogIn } from "lucide-react";
 
 const LoginForm = () => {
@@ -14,25 +14,13 @@ const LoginForm = () => {
     email: "",
     password: ""
   });
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent, userType: 'admin' | 'student') => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate login process
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Login Successful",
-        description: `Welcome back! Redirecting to ${userType} dashboard...`,
-        variant: "default",
-      });
-      
-      // Redirect based on user type
-      navigate(userType === 'admin' ? '/admin' : '/student');
-    }, 1500);
+    await login(formData.email, formData.password);
+    setIsLoading(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +62,7 @@ const LoginForm = () => {
               </TabsList>
 
               <TabsContent value="student">
-                <form onSubmit={(e) => handleSubmit(e, 'student')} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="student-email">Email</Label>
                     <Input
@@ -106,7 +94,7 @@ const LoginForm = () => {
               </TabsContent>
 
               <TabsContent value="admin">
-                <form onSubmit={(e) => handleSubmit(e, 'admin')} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="admin-email">Email</Label>
                     <Input
