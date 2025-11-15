@@ -332,7 +332,17 @@ const StudentDashboard = () => {
                 <div className="text-center py-8 text-muted-foreground">
                   Loading submissions...
                 </div>
-              ) : submissions && submissions.length > 0 ? (
+              ) : !submissions || submissions.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="mb-4">No submissions yet. Upload your first OMR sheet to get started!</p>
+                  {!submissions && (
+                    <Button asChild variant="outline">
+                      <Link to="/login">Login to View Submissions</Link>
+                    </Button>
+                  )}
+                </div>
+              ) : (
                 submissions.map((submission) => (
                   <div key={submission.id} className="flex items-center justify-between p-6 border rounded-xl hover:shadow-md transition-all duration-300 bg-gradient-to-r from-white to-gray-50">
                     <div className="flex items-center gap-4">
@@ -388,11 +398,6 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 ))
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No submissions yet. Upload your first OMR sheet to get started!</p>
-                </div>
               )}
             </div>
           </CardContent>
