@@ -120,9 +120,29 @@ Be precise in detecting which bubbles are filled. A marked bubble should be sign
     let parsedAnswers;
     try {
       // Check if the AI couldn't process the image
-      if (aiContent.toLowerCase().includes('cannot process') || 
-          aiContent.toLowerCase().includes('too blurry') ||
-          aiContent.toLowerCase().includes('not discernible')) {
+      const lowerContent = aiContent.toLowerCase();
+      
+      if (lowerContent.includes('template') && lowerContent.includes('not contain any filled')) {
+        // Update submission status to failed with helpful message
+        await supabaseClient
+          .from('submissions')
+          .update({
+            status: 'failed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', submissionId);
+
+        return new Response(
+          JSON.stringify({ 
+            error: 'This appears to be a blank OMR template. Please upload a completed answer sheet with filled bubbles.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (lowerContent.includes('cannot process') || 
+          lowerContent.includes('too blurry') ||
+          lowerContent.includes('not discernible')) {
         // Update submission status to failed with helpful message
         await supabaseClient
           .from('submissions')
