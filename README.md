@@ -1,73 +1,116 @@
-# Welcome to your Lovable project
+OMR-CHECKER
 
-## Project info
+OMR- CHECKER is a modern web application built with React + TypeScript, powered by Vite for fast development and Tailwind CSS for styling.
+The project includes a clean UI built using shadcn-ui components.
 
-**URL**: https://lovable.dev/projects/f3af1a7d-2147-4f03-bd62-9189fbefa4dd
+Live Demo: https://grade-scan.onrender.com/
 
-## How can I edit this code?
+🚀 Tech Stack
 
-There are several ways of editing your application.
+React (TypeScript)
 
-**Use Lovable**
+Vite – lightning-fast dev environment
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f3af1a7d-2147-4f03-bd62-9189fbefa4dd) and start prompting.
+Tailwind CSS – utility-first styling
 
-Changes made via Lovable will be committed automatically to this repo.
+shadcn-ui – accessible, customizable UI components
 
-**Use your preferred IDE**
+Node / Bun for dependency management and builds
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+📦 Installation & Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Follow these steps to run the project locally:
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+1. Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Navigate into the project
+cd grade-scan
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Install dependencies
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Using Bun:
+
+bun install
+
+
+or using npm:
+
+npm install
+
+4. Start the development server
+
+Using Bun:
+
+bun run dev
+
+
+or npm:
+
 npm run dev
-```
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Your app will now be available at:
 
-**Use GitHub Codespaces**
+http://localhost:5173/
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+🛠️ Environment Variables
 
-## What technologies are used for this project?
+Create a .env file in the project root:
 
-This project is built with:
+VITE_SUPABASE_URL=your_url_here
+VITE_SUPABASE_ANON_KEY=your_key_here
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
-## How can I deploy this project?
+(Include any additional env variables your project needs.)
 
-Simply open [Lovable](https://lovable.dev/projects/f3af1a7d-2147-4f03-bd62-9189fbefa4dd) and click on Share -> Publish.
+📤 Deployment
 
-## Can I connect a custom domain to my Lovable project?
+This project is optimized for Render Static Site Hosting.
 
-Yes, you can!
+Render Deployment Settings
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Build Command
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+bun install && bun run build
+
+
+or
+
+npm install && npm run build
+
+
+Publish Directory
+
+dist
+
+
+Add your environment variables in Render → Environment.
+
+Your production site is live here:
+👉 https://grade-scan.onrender.com/
+
+📁 Project Structure
+└── grade-scan/
+    ├── public/
+    ├── src/
+    │   ├── components/
+    │   ├── pages/
+    │   ├── lib/
+    │   └── App.tsx
+    ├── supabase/
+    ├── .env
+    ├── index.html
+    ├── package.json
+    ├── tailwind.config.ts
+    ├── tsconfig.json
+    └── vite.config.ts
+
+🤝 Contributing
+
+Pull requests and feature suggestions are welcome!
+Feel free to open an issue if you encounter a bug.
+
+📄 License
+
+This project is open-source and available under the MIT License.
