@@ -46,7 +46,15 @@ export const useSubmissions = () => {
   }, [queryClient]);
 
   const uploadMutation = useMutation({
-    mutationFn: async ({ file, examName }: { file: File; examName: string }) => {
+    mutationFn: async ({ 
+      file, 
+      examName, 
+      answerKey 
+    }: { 
+      file: File; 
+      examName: string;
+      answerKey?: Array<{ question: number; correct: string }>;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -60,14 +68,15 @@ export const useSubmissions = () => {
 
       if (uploadError) throw uploadError;
 
-      // Create submission record
+      // Create submission record with answer key if provided
       const { data: submission, error: submissionError } = await supabase
         .from('submissions')
         .insert({
           user_id: user.id,
           file_url: fileName,
           exam_name: examName,
-          status: 'processing'
+          status: 'processing',
+          answer_key: answerKey || null
         })
         .select()
         .single();
