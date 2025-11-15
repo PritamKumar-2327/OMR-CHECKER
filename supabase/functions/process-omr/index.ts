@@ -119,6 +119,27 @@ Be precise in detecting which bubbles are filled. A marked bubble should be sign
     // Parse AI response
     let parsedAnswers;
     try {
+      // Check if the AI couldn't process the image
+      if (aiContent.toLowerCase().includes('cannot process') || 
+          aiContent.toLowerCase().includes('too blurry') ||
+          aiContent.toLowerCase().includes('not discernible')) {
+        // Update submission status to failed with helpful message
+        await supabaseClient
+          .from('submissions')
+          .update({
+            status: 'failed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', submissionId);
+
+        return new Response(
+          JSON.stringify({ 
+            error: 'Image quality too low. Please upload a clear, high-resolution image of the OMR sheet.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       // Extract JSON from response (in case there's extra text)
       const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
@@ -127,7 +148,17 @@ Be precise in detecting which bubbles are filled. A marked bubble should be sign
       parsedAnswers = JSON.parse(jsonMatch[0]);
     } catch (e) {
       console.error('Failed to parse AI response:', aiContent);
-      throw new Error('Invalid AI response format');
+      
+      // Update submission to failed
+      await supabaseClient
+        .from('submissions')
+        .update({
+          status: 'failed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', submissionId);
+
+      throw new Error('Unable to process OMR sheet. Please ensure the image is clear and properly formatted.');
     }
 
     // For demo purposes, generate a mock answer key
