@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { useParams, Link } from "react-router-dom";
 import { useSubmissionDetail } from "@/hooks/useSubmissionDetail";
 import { PerformanceChart, QuestionAnalysisChart } from "./PerformanceChart";
+import { exportToCSV, exportToPDF } from "@/utils/exportResults";
 import { format } from "date-fns";
 import { 
   CheckCircle, 
@@ -70,9 +71,14 @@ const ResultsDetail = () => {
     }
   };
 
-  const downloadResults = (format: 'pdf' | 'excel') => {
-    const filename = `${submission.exam_name.replace(/\s+/g, '_')}_results.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
-    alert(`Downloading ${filename}...`);
+  const downloadResults = (format: 'csv' | 'pdf') => {
+    if (!submission || !questionResults) return;
+    
+    if (format === 'csv') {
+      exportToCSV(submission, questionResults);
+    } else {
+      exportToPDF(submission, questionResults);
+    }
   };
 
   const getQuestionStatus = (result: typeof questionResults[0]) => {
@@ -210,9 +216,9 @@ const ResultsDetail = () => {
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </Button>
-              <Button onClick={() => downloadResults('excel')} variant="outline">
+              <Button onClick={() => downloadResults('csv')} variant="outline">
                 <Download className="mr-2 h-4 w-4" />
-                Download Excel
+                Download CSV
               </Button>
             </div>
           </CardContent>

@@ -54,6 +54,7 @@ export type Database = {
       }
       submissions: {
         Row: {
+          answer_key: Json | null
           correct_answers: number | null
           created_at: string
           exam_name: string
@@ -69,6 +70,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          answer_key?: Json | null
           correct_answers?: number | null
           created_at?: string
           exam_name: string
@@ -84,6 +86,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          answer_key?: Json | null
           correct_answers?: number | null
           created_at?: string
           exam_name?: string

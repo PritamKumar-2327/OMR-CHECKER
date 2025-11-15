@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useSubmissions } from "@/hooks/useSubmissions";
+import { AnswerKeyUpload } from "./AnswerKeyUpload";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { 
@@ -27,6 +28,8 @@ import {
 const StudentDashboard = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [examName, setExamName] = useState("");
+  const [totalQuestions, setTotalQuestions] = useState(100);
+  const [answerKey, setAnswerKey] = useState<Array<{ question: number; correct: string }>>([]);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -98,9 +101,14 @@ const StudentDashboard = () => {
       return;
     }
 
-    await uploadMutation.mutateAsync({ file: selectedFile, examName });
+    await uploadMutation.mutateAsync({ 
+      file: selectedFile, 
+      examName,
+      answerKey: answerKey.length > 0 ? answerKey : undefined
+    });
     setSelectedFile(null);
     setExamName("");
+    setAnswerKey([]);
   };
 
   return (
@@ -238,6 +246,26 @@ const StudentDashboard = () => {
                     value={examName}
                     onChange={(e) => setExamName(e.target.value)}
                     className="w-full"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Total Questions
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="200"
+                    placeholder="100"
+                    value={totalQuestions}
+                    onChange={(e) => setTotalQuestions(parseInt(e.target.value) || 100)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="mb-4">
+                  <AnswerKeyUpload 
+                    onAnswerKeyParsed={setAnswerKey}
+                    totalQuestions={totalQuestions}
                   />
                 </div>
                 <div className="flex gap-3">

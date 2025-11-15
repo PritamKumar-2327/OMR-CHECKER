@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       throw new Error('Submission ID is required');
     }
 
-    // Get submission details
+    // Get submission details with answer key
     const { data: submission, error: submissionError } = await supabaseClient
       .from('submissions')
       .select('*')
@@ -181,15 +181,20 @@ Be precise in detecting which bubbles are filled. A marked bubble should be sign
       throw new Error('Unable to process OMR sheet. Please ensure the image is clear and properly formatted.');
     }
 
-    // For demo purposes, generate a mock answer key
-    // In production, this would come from a database of correct answers
-    const answerKey = Array.from({ length: submission.total_questions }, (_, i) => {
-      const options = ['A', 'B', 'C', 'D'];
-      return {
-        question: i + 1,
-        correct: options[Math.floor(Math.random() * options.length)]
-      };
-    });
+    // Use uploaded answer key if available, otherwise generate random
+    let answerKey;
+    if (submission.answer_key && Array.isArray(submission.answer_key)) {
+      answerKey = submission.answer_key;
+    } else {
+      // Generate mock answer key for demo purposes
+      answerKey = Array.from({ length: submission.total_questions }, (_, i) => {
+        const options = ['A', 'B', 'C', 'D'];
+        return {
+          question: i + 1,
+          correct: options[Math.floor(Math.random() * options.length)]
+        };
+      });
+    }
 
     // Calculate results
     let correctCount = 0;
@@ -197,7 +202,7 @@ Be precise in detecting which bubbles are filled. A marked bubble should be sign
     let unansweredCount = 0;
 
     const questionResults = parsedAnswers.answers.map((answer: any) => {
-      const correctAnswer = answerKey.find(k => k.question === answer.question)?.correct || 'A';
+      const correctAnswer = answerKey.find((k: any) => k.question === answer.question)?.correct || 'A';
       const isCorrect = answer.marked === correctAnswer;
       const isUnanswered = answer.marked === 'NOT_ANSWERED' || !answer.marked;
 
