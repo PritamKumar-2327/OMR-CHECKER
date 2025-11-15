@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const base64Image = btoa(binaryString);
 
     // Call Lovable AI to analyze the OMR sheet
-    const aiResponse = await fetch('https://api.lovable.app/v1/ai/chat/completions', {
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
